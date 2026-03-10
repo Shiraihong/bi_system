@@ -49,6 +49,17 @@
             <groupId>org.springframework.session</groupId>
             <artifactId>spring-session-data-redis</artifactId>
         </dependency>
+        <!-- 腾讯云 deepseek-->
+        <dependency>
+            <groupId>com.tencentcloudapi</groupId>
+            <artifactId>tencentcloud-sdk-java-common</artifactId>
+            <version>LATEST</version>
+        </dependency>
+        <dependency>
+            <groupId>com.tencentcloudapi</groupId>
+            <artifactId>tencentcloud-sdk-java-lkeap</artifactId>
+            <version>LATEST</version>
+        </dependency>
         <!-- elasticsearch-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
