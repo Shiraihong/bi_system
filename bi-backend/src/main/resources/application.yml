@@ -101,3 +101,9 @@ knife4j:
         api-rule: package
         api-rule-resources:
           - com.niko.springbootinit.controller
+#tencent cloud
+tencent:
+  deepseek:
+    client:
+      secret-id:
+      secret-key:

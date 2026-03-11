@@ -5,17 +5,19 @@ import com.tencentcloudapi.common.profile.ClientProfile;
 import com.tencentcloudapi.common.profile.HttpProfile;
 import com.tencentcloudapi.lkeap.v20240522.LkeapClient;
 import com.tencentcloudapi.lkeap.v20240522.models.ChatCompletionsRequest;
+import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @ConfigurationProperties(prefix = "tencent.deepseek.client")
-public class DeepSeekClient {
+@Data
+public class DeepSeekClientConfig {
 
-    private String SECRET_ID;
+    private String secretId;
 
-    private String SECRET_KEY;
+    private String secretKey;
 
     @Bean
     public LkeapClient deepSeekClient() {
@@ -24,9 +26,9 @@ public class DeepSeekClient {
         // 生产环境建议使用更安全的密钥管理方案，如密钥管理系统(KMS)、容器密钥注入等
         // 请参见：https://cloud.tencent.com/document/product/1278/85305
         // 密钥可前往官网控制台 https://console.cloud.tencent.com/cam/capi 进行获取
-        Credential cred = new Credential(System.getenv("TENCENTCLOUD_SECRET_ID"), System.getenv("TENCENTCLOUD_SECRET_KEY"));
+//        Credential cred = new Credential(System.getenv("TENCENTCLOUD_SECRET_ID"), System.getenv("TENCENTCLOUD_SECRET_KEY"));
         // 使用临时密钥示例
-        // Credential cred = new Credential("SecretId", "SecretKey", "Token");
+         Credential cred = new Credential(secretId, secretKey);
         // 实例化一个http选项，可选的，没有特殊需求可以跳过
         HttpProfile httpProfile = new HttpProfile();
         httpProfile.setEndpoint("lkeap.tencentcloudapi.com");
@@ -35,9 +37,7 @@ public class DeepSeekClient {
         clientProfile.setHttpProfile(httpProfile);
         // 实例化要请求产品的client对象,clientProfile是可选的
         LkeapClient client = new LkeapClient(cred, "ap-guangzhou", clientProfile);
-        // 实例化一个请求对象,每个接口都会对应一个request对象
-        ChatCompletionsRequest req = new ChatCompletionsRequest();
-        req.setModel("deepseek-v3");
+
         return client;
     }
 }

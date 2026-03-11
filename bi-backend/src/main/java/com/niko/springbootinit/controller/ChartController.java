@@ -14,11 +14,13 @@ import com.niko.springbootinit.constant.FileConstant;
 import com.niko.springbootinit.constant.UserConstant;
 import com.niko.springbootinit.exception.BusinessException;
 import com.niko.springbootinit.exception.ThrowUtils;
+import com.niko.springbootinit.manager.AiManager;
 import com.niko.springbootinit.manager.CosManager;
 import com.niko.springbootinit.model.dto.chart.*;
 import com.niko.springbootinit.model.entity.Chart;
 import com.niko.springbootinit.model.entity.User;
 import com.niko.springbootinit.model.enums.FileUploadBizEnum;
+import com.niko.springbootinit.model.vo.BiResponse;
 import com.niko.springbootinit.service.ChartService;
 import com.niko.springbootinit.service.UserService;
 import com.niko.springbootinit.utils.ExcelUtils;
@@ -55,6 +57,9 @@ public class ChartController {
 
     @Resource
     private CosManager cosManager;
+
+    @Resource
+    private AiManager aiManager;
 
     private final static Gson GSON = new Gson();
 
@@ -258,7 +263,7 @@ public class ChartController {
      * @return
      */
     @PostMapping("/gen")
-    public BaseResponse<String> genChartByAi(@RequestPart("file") MultipartFile multipartFile,
+    public BaseResponse<BiResponse> genChartByAi(@RequestPart("file") MultipartFile multipartFile,
                                              GenChartByAiRequest genChartByAiRequest, HttpServletRequest request) {
         String chartType = genChartByAiRequest.getChartType();
         String goal = genChartByAiRequest.getGoal();
@@ -269,13 +274,25 @@ public class ChartController {
 
         //user input
         StringBuffer userInput = new StringBuffer();
-        userInput.append("You are a data analyst. I provide you with my analysis objectives and raw data. Please tell me your analysis conclusions.").append("\n");
-        userInput.append("goal:").append(goal).append("\n");
+        userInput.append("goal:").append("\n");
+        userInput.append(goal).append("\n");
+        userInput.append("raw data:").append("\n");
         //compressed data
-        String rs = ExcelUtils.excelToCsv(multipartFile);
-        userInput.append("data:").append(rs).append("\n");
+        String csvData = ExcelUtils.excelToCsv(multipartFile);
+        userInput.append(csvData).append("\n");
+        long biModelId = 1659171950288818178L;
+        String result = aiManager.doChat(biModelId, userInput.toString());
+        String[] splits = result.split("【【【【【");
+        if (splits.length < 3) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "AI generation error");
+        }
+        String genChart = splits[1];
+        String genResult = splits[2];
+        BiResponse biResponse = new BiResponse();
+        biResponse.setGenChart(genChart);
+        biResponse.setGenResult(genResult);
 
-        return ResultUtils.success(userInput.toString());
+        return ResultUtils.success(biResponse);
 
 //        User loginUser = userService.getLoginUser(request);
 //        // 文件目录：根据业务、用户来划分
