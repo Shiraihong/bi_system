@@ -1,116 +1,85 @@
-// import { genChartByAiUsingPOST } from '@/services/yubi/chartController';
-// import { UploadOutlined } from '@ant-design/icons';
-// import {Button, Card, Col, Divider, Form, Input, message, Row, Select, Space, Spin, Upload} from 'antd';
-// import TextArea from 'antd/es/input/TextArea';
-// import React, { useState } from 'react';
-// import ReactECharts from 'echarts-for-react';
-//
-// /**
-//  * 添加图表页面
-//  * @constructor
-//  */
-// const AddChart: React.FC = () => {
-//   const [chart, setChart] = useState<API.BiResponse>();
-//   const [option, setOption] = useState<any>();
-//   const [submitting, setSubmitting] = useState<boolean>(false);
-//
-//   /**
-//    * 提交
-//    * @param values
-//    */
-//   const onFinish = async (values: any) => {
-//     // 避免重复提交
-//     if (submitting) {
-//       return;
-//     }
-//     setSubmitting(true);
-//     setChart(undefined);
-//     setOption(undefined);
-//     // 对接后端，上传数据
-//     const params = {
-//       ...values,
-//       file: undefined,
-//     };
-//     try {
-//       const res = await genChartByAiUsingPOST(params, {}, values.file.file.originFileObj);
-//       if (!res?.data) {
-//         message.error('分析失败');
-//       } else {
-//         message.success('分析成功');
-//         const chartOption = JSON.parse(res.data.genChart ?? '');
-//         if (!chartOption) {
-//           throw new Error('图表代码解析错误')
-//         } else {
-//           setChart(res.data);
-//           setOption(chartOption);
-//         }
-//       }
-//     } catch (e: any) {
-//       message.error('分析失败，' + e.message);
-//     }
-//     setSubmitting(false);
-//   };
-//
-//   return (
-//     <div className="add-chart">
-//       <Row gutter={24}>
-//         <Col span={12}>
-//           <Card title="智能分析">
-//             <Form name="addChart" labelAlign="left" labelCol={{ span: 4 }}
-//                   wrapperCol={{ span: 16 }} onFinish={onFinish} initialValues={{}}>
-//               <Form.Item
-//                 name="goal"
-//                 label="分析目标"
-//                 rules={[{ required: true, message: '请输入分析目标' }]}
-//               >
-//                 <TextArea placeholder="请输入你的分析需求，比如：分析网站用户的增长情况" />
-//               </Form.Item>
-//               <Form.Item name="name" label="图表名称">
-//                 <Input placeholder="请输入图表名称" />
-//               </Form.Item>
-//               <Form.Item name="chartType" label="图表类型">
-//                 <Select
-//                   options={[
-//                     { value: '折线图', label: '折线图' },
-//                     { value: '柱状图', label: '柱状图' },
-//                     { value: '堆叠图', label: '堆叠图' },
-//                     { value: '饼图', label: '饼图' },
-//                     { value: '雷达图', label: '雷达图' },
-//                   ]}
-//                 />
-//               </Form.Item>
-//               <Form.Item name="file" label="原始数据">
-//                 <Upload name="file" maxCount={1}>
-//                   <Button icon={<UploadOutlined />}>上传 CSV 文件</Button>
-//                 </Upload>
-//               </Form.Item>
-//
-//               <Form.Item wrapperCol={{ span: 16, offset: 4 }}>
-//                 <Space>
-//                   <Button type="primary" htmlType="submit" loading={submitting} disabled={submitting}>
-//                     提交
-//                   </Button>
-//                   <Button htmlType="reset">重置</Button>
-//                 </Space>
-//               </Form.Item>
-//             </Form>
-//           </Card>
-//         </Col>
-//         <Col span={12}>
-//           <Card title="分析结论">
-//             {chart?.genResult ?? <div>请先在左侧进行提交</div>}
-//             <Spin spinning={submitting}/>
-//           </Card>
-//           <Divider />
-//           <Card title="可视化图表">
-//             {
-//               option ? <ReactECharts option={option} /> : <div>请先在左侧进行提交</div>
-//             }
-//             <Spin spinning={submitting}/>
-//           </Card>
-//         </Col>
-//       </Row>
-//     </div>
-//   );
-// };
-// export default AddChart;
+import { UploadOutlined } from '@ant-design/icons';
+import {Avatar, Button, Card, Col, Divider, Form, Input, List, message, Row, Select, Space, Spin, Upload} from 'antd';
+import TextArea from 'antd/es/input/TextArea';
+import React, {useEffect, useState} from 'react';
+import {listMyChartByPageUsingPost} from "@/services/bi/chartController";
+import {data} from "@umijs/utils/compiled/cheerio/lib/api/attributes";
+
+/**
+ * 我的图表页面
+ * @constructor
+ */
+const MyChartPage: React.FC = () => {
+
+  const initSearchParams = {
+    pageSize: 12,
+  }
+
+  const [searchParams, setSearchParams] = useState<API.ChartQueryRequest> ({
+    ...initSearchParams
+  })
+  const [chartList, setChartList] = useState<API.Chart[]>();
+  const [total, setTotal] = useState<number>(0);
+
+  const loadData = async () => {
+    try {
+      const res = await listMyChartByPageUsingPost(searchParams);
+      if (res.data) {
+        setChartList(res.data.records ?? []);
+        setTotal(res.data.total ?? 0);
+      } else {
+        message.error('获取我的图表失败');
+      }
+
+    } catch (e: any) {
+      message.error('获取我的图表失败' + e.message());
+    }
+    const res = await listMyChartByPageUsingPost(searchParams);
+  }
+
+  useEffect(() => {
+    loadData()
+  }, [searchParams]);
+
+  return (
+    <div className="my-chart-page">
+    <List
+      itemLayout="vertical"
+      size="large"
+      pagination={{
+        onChange: page => {
+          console.log(page);
+        },
+        pageSize: 3,
+      }}
+      dataSource={chartList}
+      footer={
+        <div>
+          <b>ant design</b> footer part
+        </div>
+      }
+      renderItem={item => (
+        <List.Item
+          key={item.id}
+          extra={
+            <img
+              width={272}
+              alt="logo"
+              src="https://gw.alipayobjects.com/zos/rmsportal/mqaQswcyDLcXyDKnZfES.png"
+            />
+          }
+        >
+          <List.Item.Meta
+            avatar={<Avatar  />}
+            title={item.name}
+            description={item.chartType ? ('图表类型' + item.chartType) : undefined}
+          />
+            {'分析目标' + item.goal}
+        </List.Item>
+        )}
+      />
+      总数: {total}
+    </div>
+  );
+};
+export default MyChartPage;
