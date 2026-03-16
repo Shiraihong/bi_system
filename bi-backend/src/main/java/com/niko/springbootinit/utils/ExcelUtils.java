@@ -43,7 +43,7 @@ public class ExcelUtils {
         List<String> headerList = headerMap.values().stream().filter(ObjectUtils::isNotEmpty).collect(Collectors.toList());
         sb.append(StringUtils.join(headerList, ",")).append("\n");
         for (int i = 1; i < list.size(); i++) {
-            LinkedHashMap<Integer, String> dataMap = (LinkedHashMap) list.get(1);
+            LinkedHashMap<Integer, String> dataMap = (LinkedHashMap) list.get(i);
             List<String> dataList = dataMap.values().stream().filter(ObjectUtils::isNotEmpty).collect(Collectors.toList());
             sb.append(StringUtils.join(dataList, ",")).append("\n");
         }

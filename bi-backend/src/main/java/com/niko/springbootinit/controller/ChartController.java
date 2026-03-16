@@ -276,7 +276,10 @@ public class ChartController {
         StringBuffer userInput = new StringBuffer();
         userInput.append("goal:").append("\n");
         userInput.append(goal).append("\n");
+        userInput.append("chartType:").append("\n");
+        userInput.append(chartType).append("\n");
         userInput.append("raw data:").append("\n");
+
         //compressed data
         String csvData = ExcelUtils.excelToCsv(multipartFile);
         userInput.append(csvData).append("\n");
