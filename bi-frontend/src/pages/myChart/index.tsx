@@ -1,9 +1,8 @@
-import { UploadOutlined } from '@ant-design/icons';
 import {Avatar, Button, Card, Col, Divider, Form, Input, List, message, Row, Select, Space, Spin, Upload} from 'antd';
-import TextArea from 'antd/es/input/TextArea';
 import React, {useEffect, useState} from 'react';
 import {listMyChartByPageUsingPost} from "@/services/bi/chartController";
-import {data} from "@umijs/utils/compiled/cheerio/lib/api/attributes";
+import ReactECharts from "echarts-for-react";
+import {useModel} from "@umijs/max";
 
 /**
  * 我的图表页面
@@ -27,6 +26,14 @@ const MyChartPage: React.FC = () => {
       if (res.data) {
         setChartList(res.data.records ?? []);
         setTotal(res.data.total ?? 0);
+        //hide title
+        if (res.data.records) {
+          res.data.records.forEach(data => {
+            const chartOption = JSON.parse(data.genChart ?? '{}');
+            chartOption.title = undefined;
+            data.genChart = JSON.stringify(chartOption);
+          })
+        }
       } else {
         message.error('获取我的图表失败');
       }
@@ -50,35 +57,24 @@ const MyChartPage: React.FC = () => {
         onChange: page => {
           console.log(page);
         },
-        pageSize: 3,
+        pageSize: searchParams.pageSize,
       }}
       dataSource={chartList}
-      footer={
-        <div>
-          <b>ant design</b> footer part
-        </div>
-      }
       renderItem={item => (
         <List.Item
           key={item.id}
-          extra={
-            <img
-              width={272}
-              alt="logo"
-              src="https://gw.alipayobjects.com/zos/rmsportal/mqaQswcyDLcXyDKnZfES.png"
-            />
-          }
         >
-          <List.Item.Meta
-            avatar={<Avatar  />}
-            title={item.name}
-            description={item.chartType ? ('图表类型' + item.chartType) : undefined}
-          />
-            {'分析目标' + item.goal}
+          <Card>
+            <List.Item.Meta
+              title={item.name}
+              description={item.chartType ? ('图表类型: ' + item.chartType) : undefined}
+            />
+            {'分析目标: ' + item.goal}
+            <ReactECharts option={JSON.parse(item.genChart ?? '{}')} />
+          </Card>
         </List.Item>
         )}
       />
-      总数: {total}
     </div>
   );
 };
