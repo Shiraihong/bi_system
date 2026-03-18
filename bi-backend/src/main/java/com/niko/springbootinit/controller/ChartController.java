@@ -37,6 +37,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * 帖子接口
@@ -268,9 +269,17 @@ public class ChartController {
         String chartType = genChartByAiRequest.getChartType();
         String goal = genChartByAiRequest.getGoal();
         String name = genChartByAiRequest.getName();
-
+        // check
         ThrowUtils.throwIf(StringUtils.isBlank(goal), ErrorCode.PARAMS_ERROR, "goal is empty");
         ThrowUtils.throwIf(StringUtils.isNotBlank(name) && name.length() > 100, ErrorCode.PARAMS_ERROR, "name is too long");
+        // check file
+        long size = multipartFile.getSize();
+        String originalFileName = multipartFile.getOriginalFilename();
+        final long ONE_MB = 1024 * 1024L;
+        ThrowUtils.throwIf(size > ONE_MB, ErrorCode.PARAMS_ERROR, "file is larger than 1M");
+        String suffix = FileUtil.getSuffix(originalFileName);
+        final List<String> validSuffix = Arrays.asList("png", "jpg", "svg", "webp", "jpeg", "xlsx", "xsx");
+        ThrowUtils.throwIf(!validSuffix.contains(suffix), ErrorCode.PARAMS_ERROR, "this type of file is not allowed to upload");
 
         //user input
         StringBuffer userInput = new StringBuffer();
@@ -295,6 +304,8 @@ public class ChartController {
         Chart chart = new Chart();
         chart.setName(name);
         chart.setGoal(goal);
+
+        //TODO 将csvData动态分表存储
         chart.setChartData(csvData);
         chart.setChartType(chartType);
         chart.setGenChart(genChart);
