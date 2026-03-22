@@ -16,6 +16,7 @@ import com.niko.springbootinit.exception.BusinessException;
 import com.niko.springbootinit.exception.ThrowUtils;
 import com.niko.springbootinit.manager.AiManager;
 import com.niko.springbootinit.manager.CosManager;
+import com.niko.springbootinit.manager.RedisLimiterManager;
 import com.niko.springbootinit.model.dto.chart.*;
 import com.niko.springbootinit.model.entity.Chart;
 import com.niko.springbootinit.model.entity.User;
@@ -61,6 +62,9 @@ public class ChartController {
 
     @Resource
     private AiManager aiManager;
+
+    @Resource
+    private RedisLimiterManager redisLimiterManager;
 
     private final static Gson GSON = new Gson();
 
@@ -269,6 +273,7 @@ public class ChartController {
         String chartType = genChartByAiRequest.getChartType();
         String goal = genChartByAiRequest.getGoal();
         String name = genChartByAiRequest.getName();
+        User loginUser = userService.getLoginUser(request);
         // check
         ThrowUtils.throwIf(StringUtils.isBlank(goal), ErrorCode.PARAMS_ERROR, "goal is empty");
         ThrowUtils.throwIf(StringUtils.isNotBlank(name) && name.length() > 100, ErrorCode.PARAMS_ERROR, "name is too long");
@@ -278,8 +283,11 @@ public class ChartController {
         final long ONE_MB = 1024 * 1024L;
         ThrowUtils.throwIf(size > ONE_MB, ErrorCode.PARAMS_ERROR, "file is larger than 1M");
         String suffix = FileUtil.getSuffix(originalFileName);
-        final List<String> validSuffix = Arrays.asList("png", "jpg", "svg", "webp", "jpeg", "xlsx", "xsx");
+        final List<String> validSuffix = Arrays.asList("xlsx", "xls");
         ThrowUtils.throwIf(!validSuffix.contains(suffix), ErrorCode.PARAMS_ERROR, "this type of file is not allowed to upload");
+
+        //断流判断
+        redisLimiterManager.doRateLimit(String.valueOf("genChartByAi_" + loginUser.getId()));
 
         //user input
         StringBuffer userInput = new StringBuffer();
@@ -310,7 +318,6 @@ public class ChartController {
         chart.setChartType(chartType);
         chart.setGenChart(genChart);
         chart.setGenResult(genResult);
-        User loginUser = userService.getLoginUser(request);
         chart.setUserId(loginUser.getId());
         boolean saveResult = chartService.save(chart);
         ThrowUtils.throwIf(!saveResult, ErrorCode.SYSTEM_ERROR, "图表保存失败");
@@ -319,7 +326,7 @@ public class ChartController {
         biResponse.setGenResult(genResult);
         return ResultUtils.success(biResponse);
 
-//        User loginUser = userService.getLoginUser(request);
+
 //        // 文件目录：根据业务、用户来划分
 //        String uuid = RandomStringUtils.randomAlphanumeric(8);
 //        String filename = uuid + "-" + multipartFile.getOriginalFilename();
